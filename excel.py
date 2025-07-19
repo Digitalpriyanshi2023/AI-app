@@ -1,39 +1,34 @@
 import os
 import pandas as pd
+import streamlit as st
 import google.generativeai as genai
 
-# ⛅ Replace with your actual Gemini API key
+# 🔐 Gemini API key setup
 os.environ["GOOGLE_API_KEY"] = "AIzaSyAEjD-7P2ateq0U0AipxRpy3XgPUKmX6Ww"
-
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-# 🧠 Setup Gemini model
+# Load Gemini model
 model = genai.GenerativeModel("models/gemini-1.5-flash")
 
-# 📖 Load Excel file dynamically each time
-def load_excel(file_path="computer.xlsx"):
-    try:
-        df = pd.read_excel(file_path)
-        return df
-    except Exception as e:
-        print("❌ Error reading Excel:", e)
-        return None
+st.set_page_config(page_title="Gemini Excel Chatbot", layout="centered")
+st.title("📊 Gemini Excel Chatbot")
+st.markdown("Ask questions about your uploaded Excel file.")
 
-# 📄 Convert DataFrame to markdown format
-def dataframe_to_text(df, limit=100):
-    try:
-        return df.head(limit).to_markdown(index=False)
-    except Exception as e:
-        return f"Error converting dataframe: {e}"
+uploaded_file = st.file_uploader("📁 Upload an Excel file", type=["xlsx"])
+question = st.text_input("💬 Ask a question")
 
-# 💬 Ask question to Gemini with Excel data
-def chat_with_excel(question, file_path="computer.xlsx"):
-    df = load_excel(file_path)
-    if df is None:
-        return "Sorry, couldn't load the Excel data."
-    
-    context = f"""
-You are a helpful assistant analyzing employee salary data from an Excel file.
+# Process and respond
+if uploaded_file and question:
+    try:
+        df = pd.read_excel(uploaded_file)
+        st.write("📄 Excel Preview:")
+        st.dataframe(df.head(10))
+
+        def dataframe_to_text(df, limit=100):
+            return df.head(limit).to_markdown(index=False)
+
+        context = f"""
+You are a helpful assistant analyzing data from an Excel file.
 Here is a sample of the data:
 
 {dataframe_to_text(df)}
@@ -41,22 +36,9 @@ Here is a sample of the data:
 Now, answer the following question based on the full Excel data:
 {question}
 """
-    try:
         response = model.generate_content(context)
-        return response.text
+        st.success("✅ Gemini Response:")
+        st.write(response.text)
+
     except Exception as e:
-        return f"❌ Gemini API Error: {e}"
-
-# ▶️ Main Loop
-def main():
-    print("📊 Gemini Excel Chatbot is ready! Ask questions (type 'exit' to quit):\n")
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ["exit", "quit"]:
-            print("Bot: Goodbye!")
-            break
-        answer = chat_with_excel(user_input)
-        print("Bot:", answer, "\n")
-
-if __name__ == "__main__":
-    main()
+        st.error(f"Error: {e}")
