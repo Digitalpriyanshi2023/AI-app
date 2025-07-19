@@ -57,7 +57,7 @@ if uploaded_file and question:
         df = pd.read_excel(uploaded_file)
         st.success("✅ File uploaded successfully!")
         st.subheader("📄 Excel Data Preview:")
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(df.head(100), use_container_width=True)
 
         # Convert full data to CSV text
         csv_data = df.to_csv(index=False)
